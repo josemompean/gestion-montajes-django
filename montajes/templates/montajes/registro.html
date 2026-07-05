@@ -1,0 +1,101 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <!-- Configuración básica del documento -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro | Gestión de Montajes</title>
+    
+    <!-- Recursos externos: fuentes, iconos y estilos -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/estilos.css' %}">
+</head>
+<body class="login-page">
+    <!-- Contenedor principal de la página de registro -->
+    <div class="login-container">
+        <div class="login-box">
+            <!-- Cabecera del formulario de registro -->
+            <div class="login-header">
+                <h1>Gestión de Montajes</h1>
+                <p class="subtitle">Crea tu cuenta</p>
+            </div>
+            
+            <!-- Formulario de registro -->
+            <form method="POST" class="login-form">
+                {% csrf_token %}
+                
+                <!-- Campo de usuario -->
+                <div class="form-group">
+                    <label for="{{ form.username.id_for_label }}">
+                        <i class="fas fa-user"></i> Usuario
+                    </label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i> {{ form.username.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Campo de email -->
+                <div class="form-group">
+                    <label for="{{ form.email.id_for_label }}">
+                        <i class="fas fa-envelope"></i> Email
+                    </label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i> {{ form.email.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Campo de contraseña -->
+                <div class="form-group">
+                    <label for="{{ form.password1.id_for_label }}">
+                        <i class="fas fa-lock"></i> Contraseña
+                    </label>
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i> {{ form.password1.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Campo de confirmación de contraseña -->
+                <div class="form-group">
+                    <label for="{{ form.password2.id_for_label }}">
+                        <i class="fas fa-lock"></i> Confirmar Contraseña
+                    </label>
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i> {{ form.password2.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Mensajes de error generales -->
+                {% if form.non_field_errors %}
+                <div class="error-message">
+                    <i class="fas fa-exclamation-circle"></i> {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+                
+                <!-- Botón de registro -->
+                <button type="submit" class="login-button">
+                    <i class="fas fa-user-plus"></i> Registrarse
+                </button>
+            </form>
+            
+            <!-- Pie de página con enlace a inicio de sesión -->
+            <div class="login-footer">
+                <p>¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesión aquí</a></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

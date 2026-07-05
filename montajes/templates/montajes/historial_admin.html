@@ -1,0 +1,371 @@
+{% extends 'montajes/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Rendimiento de Montadores{% endblock %}
+
+{% block page_title %}Rendimiento de Montadores{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Contenedor de filtros */
+    .filters-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 25px;
+        padding: 15px;
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-color);
+        align-items: flex-end;
+    }
+    
+    .filter-section {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .filter-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-color);
+    }
+    
+    .filter-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    /* Botones de filtro de periodo */
+    .period-filter-btn {
+        padding: 8px 16px;
+        border-radius: 8px;
+        background-color: #f8fafc;
+        border: 1px solid var(--border-color);
+        color: var(--text-light);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .period-filter-btn:hover {
+        background-color: #f0f9ff;
+        border-color: var(--primary-color);
+    }
+    
+    .period-filter-btn.active {
+        background-color: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+    
+    /* Caja de búsqueda */
+    .search-box {
+        flex-grow: 1;
+        position: relative;
+        max-width: 400px;
+        margin-left: auto;
+        height: 42px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .search-input {
+        width: 100%;
+        height: 100%;
+        padding: 10px 16px;
+        padding-left: 40px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        font-size: 0.95rem;
+        outline: none;
+        transition: all 0.3s ease;
+    }
+    
+    .search-input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+    
+    .search-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-light);
+        pointer-events: none;
+        z-index: 1;
+    }
+    
+    /* Tarjeta de información de periodo */
+    .period-info-card {
+        background-color: #f0f9ff;
+        border-left: 4px solid var(--primary-color);
+        padding: 15px 20px;
+        margin-bottom: 25px;
+        border-radius: 8px;
+        font-weight: 500;
+        color: var(--text-color);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .period-info-card i {
+        color: var(--primary-color);
+        font-size: 1.2rem;
+    }
+    
+    /* Tabla de rendimiento */
+    .performance-table-container {
+        background-color: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-color);
+        margin-bottom: 30px;
+    }
+    
+    .performance-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .performance-table th {
+        background-color: #f8fafc;
+        padding: 16px 20px;
+        text-align: left;
+        color: var(--text-color);
+        font-weight: 600;
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        border-bottom: 2px solid var(--border-color);
+    }
+    
+    .performance-table td {
+        padding: 16px 20px;
+        border-top: 1px solid var(--border-color);
+        color: var(--text-light);
+    }
+    
+    .performance-table tr:hover {
+        background-color: #f0f9ff;
+    }
+    
+    /* Medallas por rendimiento */
+    .medal {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+        color: white;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+    
+    .gold {
+        background: linear-gradient(135deg, #FFD700, #FFA500);
+        box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+    }
+    
+    .silver {
+        background: linear-gradient(135deg, #C0C0C0, #A9A9A9);
+        box-shadow: 0 2px 8px rgba(192, 192, 192, 0.4);
+    }
+    
+    .bronze {
+        background: linear-gradient(135deg, #CD7F32, #8B4513);
+        box-shadow: 0 2px 8px rgba(205, 127, 50, 0.4);
+    }
+    
+    /* Celda de usuario */
+    .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .user-info {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .user-name {
+        font-weight: 600;
+        color: var(--text-color);
+    }
+    
+    .user-username {
+        font-size: 0.85rem;
+        color: var(--text-light);
+    }
+    
+    /* Mensajes vacíos */
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 50px 20px;
+        text-align: center;
+    }
+    
+    .empty-icon {
+        font-size: 3rem;
+        color: var(--text-lighter);
+        margin-bottom: 20px;
+    }
+    
+    .empty-message {
+        font-size: 1.2rem;
+        font-weight: 500;
+        color: var(--text-light);
+        margin-bottom: 15px;
+    }
+    
+    .empty-description {
+        font-size: 0.95rem;
+        color: var(--text-lighter);
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    
+    /* Diseño responsivo */
+    @media (max-width: 768px) {
+        .filters-container {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .search-box {
+            max-width: 100%;
+        }
+        
+        .performance-table-container {
+            overflow-x: auto;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-container">
+    <!-- Filtros -->
+    <form class="filters-container" method="get">
+        <div class="filter-section">
+            <div class="filter-label">Periodo</div>
+            <div class="filter-options">
+                <button type="submit" name="periodo" value="dia" class="period-filter-btn {% if periodo == 'dia' %}active{% endif %}">Último día</button>
+                <button type="submit" name="periodo" value="semana" class="period-filter-btn {% if periodo == 'semana' %}active{% endif %}">Última semana</button>
+                <button type="submit" name="periodo" value="mes" class="period-filter-btn {% if periodo == 'mes' %}active{% endif %}">Último mes</button>
+                <button type="submit" name="periodo" value="trimestre" class="period-filter-btn {% if periodo == 'trimestre' %}active{% endif %}">Último trimestre</button>
+                <button type="submit" name="periodo" value="año" class="period-filter-btn {% if periodo == 'año' %}active{% endif %}">Último año</button>
+                <button type="submit" name="periodo" value="todos" class="period-filter-btn {% if periodo == 'todos' %}active{% endif %}">Todo</button>
+            </div>
+        </div>
+        
+        <div class="search-box">
+            <span class="search-icon">
+                <i class="fas fa-search"></i>
+            </span>
+            <input type="text" name="busqueda" placeholder="Buscar montador..." class="search-input" value="{{ busqueda }}">
+        </div>
+    </form>
+    
+    <!-- Información del periodo -->
+    <div class="period-info-card">
+        <i class="fas fa-info-circle"></i>
+        <span>Mostrando rendimiento de montadores para el periodo: <strong>{{ titulo_periodo }}</strong></span>
+    </div>
+    
+    <!-- Tabla de rendimiento -->
+    <div class="performance-table-container">
+        {% if rendimiento_montadores %}
+        <table class="performance-table">
+            <thead>
+                <tr>
+                    <th style="width: 50px">#</th>
+                    <th>Montador</th>
+                    <th>Montajes finalizados</th>
+                    <th>Montajes en proceso</th>
+                    <th>Total montajes</th>
+                    <th>Tiempo promedio</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rendimiento in rendimiento_montadores %}
+                <tr>
+                    <td>
+                        {% if forloop.counter == 1 %}
+                        <span class="medal gold">1</span>
+                        {% elif forloop.counter == 2 %}
+                        <span class="medal silver">2</span>
+                        {% elif forloop.counter == 3 %}
+                        <span class="medal bronze">3</span>
+                        {% else %}
+                        {{ forloop.counter }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="user-cell">
+                            <div class="user-avatar">
+                                {{ rendimiento.montador.first_name|first|upper }}{{ rendimiento.montador.last_name|first|upper }}
+                            </div>
+                            <div class="user-info">
+                                <div class="user-name">{{ rendimiento.montador.first_name }} {{ rendimiento.montador.last_name }}</div>
+                                <div class="user-username">@{{ rendimiento.montador.username }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ rendimiento.finalizados }}</td>
+                    <td>{{ rendimiento.en_proceso }}</td>
+                    <td><strong>{{ rendimiento.total }}</strong></td>
+                    <td>
+                        {% if rendimiento.tiempo_promedio %}
+                        {{ rendimiento.tiempo_promedio }}
+                        {% else %}
+                        <span style="color: var(--text-lighter)">No disponible</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="empty-message">No hay datos de rendimiento disponibles</div>
+            <div class="empty-description">
+                {% if busqueda %}
+                No se encontraron montadores que coincidan con tu búsqueda. Intenta con otros términos.
+                {% else %}
+                No hay datos de montajes para el periodo seleccionado o aún no hay montajes registrados en el sistema.
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

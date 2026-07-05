@@ -1,0 +1,58 @@
+<svg width="500" height="500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+      <rect width="50" height="50" fill="none"/>
+      <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+    </pattern>
+    
+    <pattern id="tools" width="100" height="100" patternUnits="userSpaceOnUse">
+      <path d="M20,20 L25,25 M30,30 L35,35" stroke="rgba(255,255,255,0.05)" stroke-width="2" stroke-linecap="round"/>
+      <path d="M60,20 C65,15 70,15 75,20" stroke="rgba(59,130,246,0.05)" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M80,40 L85,35 L85,40 L80,40 Z" fill="rgba(16,185,129,0.05)"/>
+      <path d="M30,60 A10,10 0 0,1 40,70" stroke="rgba(255,255,255,0.04)" stroke-width="1" fill="none"/>
+      <path d="M70,70 L75,75 M80,80 L85,85" stroke="rgba(255,255,255,0.03)" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="50" cy="50" r="3" fill="rgba(59,130,246,0.04)"/>
+    </pattern>
+    
+    <pattern id="gears" width="200" height="200" patternUnits="userSpaceOnUse">
+      <!-- Large gear outline -->
+      <circle cx="100" cy="100" r="30" fill="none" stroke="rgba(255,255,255,0.02)" stroke-width="2"/>
+      <circle cx="100" cy="100" r="20" fill="none" stroke="rgba(255,255,255,0.015)" stroke-width="1"/>
+      
+      <!-- Gear teeth -->
+      <path d="M100,70 L95,60 L105,60 Z" fill="rgba(255,255,255,0.02)"/>
+      <path d="M130,100 L140,95 L140,105 Z" fill="rgba(255,255,255,0.02)"/>
+      <path d="M100,130 L105,140 L95,140 Z" fill="rgba(255,255,255,0.02)"/>
+      <path d="M70,100 L60,105 L60,95 Z" fill="rgba(255,255,255,0.02)"/>
+      
+      <path d="M118,82 L123,72 L133,77 Z" fill="rgba(255,255,255,0.02)"/>
+      <path d="M118,118 L133,123 L123,128 Z" fill="rgba(255,255,255,0.02)"/>
+      <path d="M82,118 L77,128 L67,123 Z" fill="rgba(255,255,255,0.02)"/>
+      <path d="M82,82 L67,77 L77,72 Z" fill="rgba(255,255,255,0.02)"/>
+      
+      <!-- Small gear at top left -->
+      <circle cx="40" cy="40" r="15" fill="none" stroke="rgba(59,130,246,0.03)" stroke-width="1"/>
+      <circle cx="40" cy="40" r="10" fill="none" stroke="rgba(59,130,246,0.02)" stroke-width="0.5"/>
+      
+      <!-- Small gear teeth -->
+      <path d="M40,25 L37,20 L43,20 Z" fill="rgba(59,130,246,0.03)"/>
+      <path d="M55,40 L60,37 L60,43 Z" fill="rgba(59,130,246,0.03)"/>
+      <path d="M40,55 L43,60 L37,60 Z" fill="rgba(59,130,246,0.03)"/>
+      <path d="M25,40 L20,43 L20,37 Z" fill="rgba(59,130,246,0.03)"/>
+      
+      <!-- Small gear at bottom right -->
+      <circle cx="160" cy="160" r="15" fill="none" stroke="rgba(16,185,129,0.03)" stroke-width="1"/>
+      <circle cx="160" cy="160" r="10" fill="none" stroke="rgba(16,185,129,0.02)" stroke-width="0.5"/>
+      
+      <!-- Small gear teeth -->
+      <path d="M160,145 L157,140 L163,140 Z" fill="rgba(16,185,129,0.03)"/>
+      <path d="M175,160 L180,157 L180,163 Z" fill="rgba(16,185,129,0.03)"/>
+      <path d="M160,175 L163,180 L157,180 Z" fill="rgba(16,185,129,0.03)"/>
+      <path d="M145,160 L140,163 L140,157 Z" fill="rgba(16,185,129,0.03)"/>
+    </pattern>
+  </defs>
+  
+  <rect width="500" height="500" fill="url(#grid)"/>
+  <rect width="500" height="500" fill="url(#tools)"/>
+  <rect width="500" height="500" fill="url(#gears)"/>
+</svg> 

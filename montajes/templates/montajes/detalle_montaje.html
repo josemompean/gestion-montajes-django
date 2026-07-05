@@ -1,0 +1,917 @@
+{% extends 'montajes/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Detalle de Montaje{% endblock %}
+
+{% block page_title %}Detalle de Montaje{% endblock %}
+
+{% block content %}
+<!-- Vista detallada del montaje -->
+<div class="detail-view">
+    <!-- Encabezado con información básica y acciones disponibles -->
+    <div class="detail-header">
+        <div class="detail-title">
+            <h2>Montaje #{{ montaje.numero_serie }}</h2>
+            <span class="status-badge 
+                 
+            </span>
+        </div>
+        
+        <div class="detail-actions">
+            {% if montaje.estado == 'Pendiente' %}
+            <a href="{% url 'iniciar_montaje' montaje.id %}" class="btn-action start">
+                <i class="fas fa-play-circle"></i> <span>Iniciar</span>
+            </a>
+            {% elif montaje.estado == 'En proceso' and montaje.montador == user %}
+            <a href="{% url 'finalizar_montaje' montaje.id %}" class="btn-action finish">
+                <i class="fas fa-check-circle"></i> <span>Finalizar</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Temporizador para montajes en proceso -->
+    {% if montaje.estado == 'En proceso' %}
+    <div class="timer-container">
+        <div class="timer-icon">
+            <i class="fas fa-stopwatch"></i>
+        </div>
+        <div class="timer-content">
+            <div class="timer-label">Tiempo transcurrido</div>
+            <div class="timer-display" id="timer-display" data-fecha-inicio="{{ montaje.fecha_inicio|date:'Y-m-d H:i:s' }}">
+                <span id="days">00</span>d 
+                <span id="hours">00</span>h 
+                <span id="minutes">00</span>m 
+                <span id="seconds">00</span>s
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Duración total para montajes finalizados -->
+    {% if montaje.estado == 'Finalizado' and montaje.fecha_inicio and montaje.fecha_finalizacion %}
+    <div class="timer-container completed">
+        <div class="timer-icon">
+            <i class="fas fa-hourglass-end"></i>
+        </div>
+        <div class="timer-content">
+            <div class="timer-label">Duración total</div>
+            <div class="timer-display" id="duration-display" 
+                data-fecha-inicio="{{ montaje.fecha_inicio|date:'Y-m-d H:i:s' }}"
+                data-fecha-fin="{{ montaje.fecha_finalizacion|date:'Y-m-d H:i:s' }}">
+                Calculando...
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Contenido principal con detalles del montaje -->
+    <div class="detail-content">
+        <!-- Sección de información general -->
+        <div class="detail-section">
+            <h3>Información General</h3>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Cliente</span>
+                    <span class="detail-value">{{ montaje.cliente }}</span>
+                </div>
+                
+                <div class="detail-item">
+                    <span class="detail-label">Número de Serie</span>
+                    <span class="detail-value">{{ montaje.numero_serie }}</span>
+                </div>
+                
+                <div class="detail-item">
+                    <span class="detail-label">Fecha de Registro</span>
+                    <span class="detail-value">{{ montaje.fecha_montaje|date:"d/m/Y" }}</span>
+                </div>
+                
+                <div class="detail-item">
+                    <span class="detail-label">Hora de Registro</span>
+                    <span class="detail-value">{{ montaje.fecha_montaje|date:"H:i" }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sección de modelo de ordenador y componentes -->
+        {% if montaje.modelo_ordenador %}
+        <div class="detail-section">
+            <h3>Modelo de Ordenador</h3>
+            <div class="detail-grid">
+                <div class="detail-item full-width">
+                    <span class="detail-label">Nombre del Modelo</span>
+                    <span class="detail-value">{{ montaje.modelo_ordenador.nombre }}</span>
+                </div>
+                
+                {% if montaje.modelo_ordenador.descripcion %}
+                <div class="detail-item full-width">
+                    <span class="detail-label">Descripción</span>
+                    <span class="detail-value">{{ montaje.modelo_ordenador.descripcion }}</span>
+                </div>
+                {% endif %}
+            </div>
+            
+            {% if componentes %}
+            <h4 class="components-title">Componentes</h4>
+            <div class="components-list">
+                {% for componente in componentes %}
+                <div class="component-card">
+                    <div class="component-icon">
+                        {% if componente.categoria == 'CPU' %}
+                            <i class="fas fa-microchip"></i>
+                        {% elif componente.categoria == 'RAM' %}
+                            <i class="fas fa-memory"></i>
+                        {% elif componente.categoria == 'GPU' %}
+                            <i class="fas fa-tv"></i>
+                        {% elif componente.categoria == 'SSD' or componente.categoria == 'HDD' %}
+                            <i class="fas fa-hdd"></i>
+                        {% elif componente.categoria == 'MOB' %}
+                            <i class="fas fa-server"></i>
+                        {% elif componente.categoria == 'PSU' %}
+                            <i class="fas fa-plug"></i>
+                        {% elif componente.categoria == 'COOL' %}
+                            <i class="fas fa-fan"></i>
+                        {% elif componente.categoria == 'CASE' %}
+                            <i class="fas fa-desktop"></i>
+                        {% else %}
+                            <i class="fas fa-cog"></i>
+                        {% endif %}
+                    </div>
+                    <div class="component-details">
+                        <h5 class="component-category">{{ componente.get_categoria_display }}</h5>
+                        <div class="component-name">{{ componente.marca }} {{ componente.nombre }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-components-message">
+                <i class="fas fa-exclamation-circle"></i>
+                <p>No hay componentes registrados para este modelo.</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <!-- Sección de estado del montaje -->
+        <div class="detail-section">
+            <h3>Estado del Montaje</h3>
+            <div class="detail-grid">
+                {% if montaje.montador %}
+                <div class="detail-item">
+                    <span class="detail-label">Montador Asignado</span>
+                    <span class="detail-value">{{ montaje.montador.username }}</span>
+                </div>
+                {% endif %}
+                
+                {% if montaje.fecha_inicio %}
+                <div class="detail-item">
+                    <span class="detail-label">Fecha de Inicio</span>
+                    <span class="detail-value">{{ montaje.fecha_inicio|date:"d/m/Y" }}</span>
+                </div>
+                
+                <div class="detail-item">
+                    <span class="detail-label">Hora de Inicio</span>
+                    <span class="detail-value">{{ montaje.fecha_inicio|date:"H:i" }}</span>
+                </div>
+                {% endif %}
+                
+                {% if montaje.fecha_finalizacion %}
+                <div class="detail-item">
+                    <span class="detail-label">Fecha de Finalización</span>
+                    <span class="detail-value">{{ montaje.fecha_finalizacion|date:"d/m/Y" }}</span>
+                </div>
+                
+                <div class="detail-item">
+                    <span class="detail-label">Hora de Finalización</span>
+                    <span class="detail-value">{{ montaje.fecha_finalizacion|date:"H:i" }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pie de página con botón para volver -->
+    <div class="detail-footer">
+        {% if montaje.estado == 'Pendiente' %}
+            <a href="{% url 'lista_montajes' %}" class="btn-back">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                </svg>
+                Volver a Montajes
+            </a>
+        {% else %}
+            <a href="{% url 'mis_montajes' %}" class="btn-back">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                </svg>
+                Volver a Mis Montajes
+            </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Estilos para la vista detallada */
+    .detail-view {
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+        max-width: 1000px;
+        margin: 0 auto;
+        border: 1px solid var(--border-color);
+        position: relative;
+    }
+    
+    /* Barra superior colorida */
+    .detail-view::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    }
+    
+    /* Encabezado con título y acciones */
+    .detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 24px 32px;
+        border-bottom: 1px solid var(--border-color);
+        background-color: #f8fafc;
+    }
+    
+    /* Contenedor del título y estado */
+    .detail-title {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+    
+    /* Estilo del título principal */
+    .detail-title h2 {
+        font-size: 22px;
+        font-weight: 600;
+        color: var(--text-color);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    /* Icono junto al título */
+    .detail-title h2:before {
+        content: '\f085';
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        color: var(--primary-color);
+        font-size: 1.1rem;
+    }
+    
+    /* Estilos de las insignias de estado */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 15px;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Punto de estado en las insignias */
+    .status-badge:before {
+        content: '';
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 8px;
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+    }
+    
+    /* Estado pendiente */
+    .status-pending {
+        background-color: rgba(245, 158, 11, 0.1);
+        color: var(--warning-color);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+    
+    .status-pending:before {
+        background-color: var(--warning-color);
+    }
+    
+    /* Estado en proceso */
+    .status-progress {
+        background-color: rgba(59, 130, 246, 0.1);
+        color: var(--info-color);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+    
+    .status-progress:before {
+        background-color: var(--info-color);
+    }
+    
+    /* Estado completado */
+    .status-completed {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: var(--success-color);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+    
+    .status-completed:before {
+        background-color: var(--success-color);
+    }
+    
+    /* Estilos para los botones de acción */
+    .detail-actions {
+        display: flex;
+        gap: 12px;
+    }
+    
+    .btn-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        min-width: 120px;
+        white-space: nowrap;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-action i {
+        margin-right: 8px;
+        font-size: 16px;
+    }
+    
+    /* Botón de iniciar */
+    .btn-action.start {
+        background-color: var(--primary-color);
+        color: white;
+        box-shadow: 0 2px 10px rgba(59, 130, 246, 0.3);
+    }
+    
+    .btn-action.start:hover {
+        background-color: var(--primary-dark);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        transform: translateY(-2px);
+    }
+    
+    /* Botón de finalizar */
+    .btn-action.finish {
+        background-color: var(--success-color);
+        color: white;
+        box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+    }
+    
+    .btn-action.finish:hover {
+        background-color: #0d9488;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        transform: translateY(-2px);
+    }
+    
+    /* Estilos para el temporizador */
+    .timer-container {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 16px 32px;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(59, 130, 246, 0.02));
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .timer-container.completed {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.02));
+    }
+    
+    /* Icono del temporizador */
+    .timer-icon {
+        width: 48px;
+        height: 48px;
+        background-color: rgba(59, 130, 246, 0.1);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    
+    .timer-container.completed .timer-icon {
+        background-color: rgba(16, 185, 129, 0.1);
+    }
+    
+    .timer-icon i {
+        font-size: 24px;
+        color: var(--primary-color);
+    }
+    
+    .timer-container.completed .timer-icon i {
+        color: var(--success-color);
+    }
+    
+    /* Contenido del temporizador */
+    .timer-content {
+        flex-grow: 1;
+    }
+    
+    .timer-label {
+        font-size: 14px;
+        color: var(--text-light);
+        margin-bottom: 4px;
+    }
+    
+    .timer-display {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-color);
+        font-family: 'Roboto Mono', monospace, sans-serif;
+        letter-spacing: 0.5px;
+    }
+    
+    .timer-display span {
+        display: inline-block;
+        min-width: 32px;
+        text-align: center;
+    }
+    
+    /* Contenido principal de la vista detallada */
+    .detail-content {
+        padding: 32px;
+    }
+    
+    /* Secciones de detalle */
+    .detail-section {
+        margin-bottom: 36px;
+        background-color: white;
+        border-radius: 10px;
+        padding: 24px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        border: 1px solid var(--border-color);
+    }
+    
+    .detail-section:last-child {
+        margin-bottom: 0;
+    }
+    
+    /* Títulos de sección */
+    .detail-section h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-color);
+        margin: 0 0 20px 0;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border-color);
+        position: relative;
+    }
+    
+    /* Indicador colorido bajo el título de sección */
+    .detail-section h3:after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 50px;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+        border-radius: 2px;
+    }
+    
+    /* Cuadrícula para los detalles */
+    .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+    
+    /* Elementos individuales de detalle */
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .detail-label {
+        font-size: 13px;
+        color: var(--text-light);
+        font-weight: 500;
+    }
+    
+    .detail-value {
+        font-size: 16px;
+        color: var(--text-color);
+        font-weight: 500;
+    }
+    
+    /* Estilos para la sección de componentes */
+    .full-width {
+        grid-column: 1 / -1;
+    }
+    
+    .components-title {
+        font-size: 18px;
+        color: var(--text-color);
+        margin: 20px 0 15px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .components-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+        margin-top: 15px;
+    }
+    
+    /* Vista en lista para PC */
+    @media (min-width: 992px) {
+        .components-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+    }
+    
+    .component-card {
+        display: flex;
+        background-color: #f9fafb;
+        border-radius: 8px;
+        padding: 16px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    /* Estilo de tarjeta para PC (formato lista) */
+    @media (min-width: 992px) {
+        .component-card {
+            border-left: 3px solid var(--primary-color);
+            border-radius: 4px;
+            padding: 12px 16px;
+            margin-bottom: 0;
+        }
+    }
+    
+    .component-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .component-icon {
+        width: 40px;
+        height: 40px;
+        background-color: var(--primary-light);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 16px;
+        flex-shrink: 0;
+    }
+    
+    /* Icono más pequeño para PC */
+    @media (min-width: 992px) {
+        .component-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+        }
+    }
+    
+    .component-icon i {
+        font-size: 18px;
+        color: var(--primary-color);
+    }
+    
+    .component-details {
+        flex: 1;
+    }
+    
+    /* Detalles en formato horizontal para PC */
+    @media (min-width: 992px) {
+        .component-details {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px 20px;
+        }
+        
+        .component-category {
+            min-width: 150px;
+            margin: 0;
+        }
+        
+        .component-name {
+            min-width: 200px;
+            margin: 0;
+        }
+        
+        .component-specs {
+            margin: 0;
+            color: var(--text-light);
+        }
+        
+        .component-description {
+            width: 100%;
+            margin-top: 4px;
+            font-style: italic;
+            padding-left: 2px;
+        }
+    }
+    
+    .component-category {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--primary-color);
+        margin: 0 0 4px;
+        text-transform: uppercase;
+    }
+    
+    .component-name {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 4px;
+    }
+    
+    .component-specs {
+        font-size: 14px;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+    }
+    
+    .component-description {
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.4;
+    }
+    
+    .no-components-message {
+        display: flex;
+        align-items: center;
+        background-color: #f9fafb;
+        border-radius: 8px;
+        padding: 16px;
+        margin-top: 15px;
+    }
+    
+    .no-components-message i {
+        font-size: 24px;
+        color: #9ca3af;
+        margin-right: 12px;
+    }
+    
+    .no-components-message p {
+        color: #6b7280;
+        margin: 0;
+    }
+    
+    /* Media queries para componentes */
+    @media (max-width: 768px) {
+        .components-list {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    /* Pie de página */
+    .detail-footer {
+        padding: 16px 32px;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: flex-start;
+        background-color: #f8fafc;
+    }
+    
+    /* Botón de volver */
+    .btn-back {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 6px;
+        background-color: white;
+        color: var(--text-color);
+        font-weight: 500;
+        text-decoration: none;
+        transition: var(--transition);
+        border: 1px solid var(--border-color);
+    }
+    
+    .btn-back:hover {
+        background-color: var(--bg-light);
+        color: var(--primary-color);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .btn-back svg {
+        transition: transform 0.2s ease;
+    }
+    
+    .btn-back:hover svg {
+        transform: translateX(-3px);
+    }
+    
+    /* Diseño responsivo para tabletas */
+    @media (max-width: 768px) {
+        .detail-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 20px;
+        }
+        
+        .detail-title {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        
+        .detail-actions {
+            width: 100%;
+            justify-content: flex-start;
+        }
+        
+        .btn-action {
+            padding: 10px 16px;
+            min-width: 110px;
+        }
+        
+        .timer-container {
+            padding: 16px 20px;
+        }
+        
+        .timer-display {
+            font-size: 18px;
+        }
+        
+        .detail-content {
+            padding: 20px;
+        }
+        
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .detail-section {
+            padding: 20px;
+        }
+        
+        .detail-footer {
+            padding: 16px 20px;
+        }
+    }
+    
+    /* Diseño responsivo para móviles */
+    @media (max-width: 480px) {
+        .detail-header {
+            padding: 16px;
+        }
+        
+        .detail-title h2 {
+            font-size: 18px;
+        }
+        
+        .btn-action {
+            padding: 8px 14px;
+            min-width: 100px;
+            font-size: 14px;
+        }
+        
+        .btn-action i {
+            margin-right: 8px;
+            font-size: 14px;
+        }
+        
+        .timer-container {
+            padding: 12px 16px;
+            gap: 12px;
+        }
+        
+        .timer-icon {
+            width: 40px;
+            height: 40px;
+        }
+        
+        .timer-icon i {
+            font-size: 20px;
+        }
+        
+        .timer-display {
+            font-size: 16px;
+        }
+        
+        .timer-display span {
+            min-width: 24px;
+        }
+        
+        .detail-content {
+            padding: 16px;
+        }
+        
+        .detail-section {
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .detail-section h3 {
+            font-size: 16px;
+            padding-bottom: 10px;
+            margin-bottom: 16px;
+        }
+        
+        .detail-value {
+            font-size: 15px;
+        }
+        
+        .status-badge {
+            padding: 4px 10px;
+            font-size: 0.75rem;
+        }
+        
+        .btn-back {
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+        
+        .detail-footer {
+            padding: 12px 16px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Temporizador para montajes en proceso
+        const timerDisplay = document.getElementById('timer-display');
+        if (timerDisplay) {
+            const fechaInicio = new Date(timerDisplay.getAttribute('data-fecha-inicio'));
+            
+            // Actualizar el temporizador cada segundo
+            updateTimer(fechaInicio);
+            setInterval(function() {
+                updateTimer(fechaInicio);
+            }, 1000);
+        }
+        
+        // Mostrar duración total para montajes finalizados
+        const durationDisplay = document.getElementById('duration-display');
+        if (durationDisplay) {
+            const fechaInicio = new Date(durationDisplay.getAttribute('data-fecha-inicio'));
+            const fechaFin = new Date(durationDisplay.getAttribute('data-fecha-fin'));
+            
+            // Calcular y mostrar la duración total
+            const duration = calculateDuration(fechaInicio, fechaFin);
+            durationDisplay.textContent = formatDuration(duration);
+        }
+        
+        // Función para actualizar el temporizador
+        function updateTimer(fechaInicio) {
+            const ahora = new Date();
+            const diferencia = ahora - fechaInicio;
+            
+            const duration = calculateDuration(fechaInicio, ahora);
+            
+            // Actualizar los elementos del DOM
+            document.getElementById('days').textContent = padZero(duration.days);
+            document.getElementById('hours').textContent = padZero(duration.hours);
+            document.getElementById('minutes').textContent = padZero(duration.minutes);
+            document.getElementById('seconds').textContent = padZero(duration.seconds);
+        }
+        
+        // Función para calcular la duración entre dos fechas
+        function calculateDuration(fechaInicio, fechaFin) {
+            const diferencia = fechaFin - fechaInicio;
+            
+            // Calcular días, horas, minutos y segundos
+            const totalSeconds = Math.floor(diferencia / 1000);
+            const days = Math.floor(totalSeconds / (60 * 60 * 24));
+            const hours = Math.floor((totalSeconds % (60 * 60 * 24)) / (60 * 60));
+            const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
+            const seconds = Math.floor(totalSeconds % 60);
+            
+            return { days, hours, minutes, seconds };
+        }
+        
+        // Formato de texto para la duración
+        function formatDuration(duration) {
+            return `${padZero(duration.days)} días, ${padZero(duration.hours)}h ${padZero(duration.minutes)}m ${padZero(duration.seconds)}s`;
+        }
+        
+        // Añadir ceros a la izquierda
+        function padZero(num) {
+            return num.toString().padStart(2, '0');
+        }
+    });
+</script>
+{% endblock %}

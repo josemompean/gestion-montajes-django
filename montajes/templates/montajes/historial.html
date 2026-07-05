@@ -1,0 +1,596 @@
+{% extends 'montajes/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Mi Historial de Montajes{% endblock %}
+
+{% block page_title %}Mi Historial de Montajes{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/historial.css' %}">
+<style>
+    /* Contenedor de estadísticas */
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    /* Tarjetas de estadísticas */
+    .stat-card {
+        background-color: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: var(--card-shadow);
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 1px solid var(--border-color);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    /* Efecto hover para tarjetas */
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Círculo decorativo en las tarjetas */
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        top: -20px;
+        right: -20px;
+        width: 60px;
+        height: 60px;
+        background: rgba(26, 115, 232, 0.1);
+        border-radius: 50%;
+        z-index: 0;
+    }
+    
+    /* Título de estadística */
+    .stat-title {
+        font-size: 1rem;
+        color: var(--text-light);
+        margin-bottom: 10px;
+        font-weight: 500;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Valor de estadística */
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Icono de estadística */
+    .stat-icon {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+        color: var(--primary-color);
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Contenedor principal del historial */
+    .historial-container {
+        padding: 20px 0;
+    }
+    
+    /* Contenedor de la tabla */
+    .table-container {
+        background-color: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-color);
+    }
+    
+    /* Tabla de historial */
+    .historial-table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: white;
+    }
+    
+    /* Encabezados de tabla */
+    .historial-table th {
+        background-color: #f8fafc;
+        padding: 16px 20px;
+        text-align: left;
+        color: var(--text-color);
+        font-weight: 600;
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        border-bottom: 2px solid var(--border-color);
+    }
+    
+    /* Celdas de tabla */
+    .historial-table td {
+        padding: 16px 20px;
+        border-top: 1px solid var(--border-color);
+        color: var(--text-light);
+    }
+    
+    /* Efecto hover en filas */
+    .historial-table tr:hover {
+        background-color: #f0f9ff;
+    }
+    
+    /* Insignias de estado */
+    .estado-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 15px;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .estado-badge:before {
+        content: '';
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+    
+    /* Estado pendiente */
+    .estado-pendiente {
+        background-color: rgba(245, 158, 11, 0.1);
+        color: var(--warning-color);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+    
+    .estado-pendiente:before {
+        background-color: var(--warning-color);
+    }
+    
+    /* Estado en proceso */
+    .estado-en-proceso {
+        background-color: rgba(59, 130, 246, 0.1);
+        color: var(--info-color);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+    
+    .estado-en-proceso:before {
+        background-color: var(--info-color);
+    }
+    
+    /* Estado completado */
+    .estado-completado {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: var(--success-color);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+    
+    .estado-completado:before {
+        background-color: var(--success-color);
+    }
+    
+    /* Enlaces de acción */
+    .accion-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 6px;
+        background-color: rgba(59, 130, 246, 0.1);
+        color: var(--primary-color);
+        font-weight: 500;
+        text-decoration: none;
+        transition: var(--transition);
+    }
+    
+    .accion-link:hover {
+        background-color: rgba(59, 130, 246, 0.2);
+        transform: translateY(-2px);
+    }
+    
+    /* Caja de búsqueda */
+    /* Estilos para filtros de búsqueda y ordenación */
+    .search-filter {
+        display: flex;
+        align-items: center;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        margin-bottom: 20px;
+        max-width: 300px;
+    }
+    
+    .search-filter i {
+        color: var(--primary-color);
+        padding: 0 10px;
+    }
+    
+    /* Campos de entrada de filtros */
+    .filter-input {
+        border: none;
+        padding: 8px 12px;
+        background: transparent;
+        outline: none;
+        min-width: 200px;
+    }
+    
+    .filter-input:focus {
+        outline: none;
+    }
+    
+    /* Mensaje cuando no hay elementos */
+    .empty-message {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-light);
+        background-color: white;
+    }
+    
+    /* Tarjetas para vista móvil */
+    .mobile-cards {
+        display: none;
+    }
+    
+    .historial-card {
+        background-color: white;
+        border-radius: 12px;
+        margin-bottom: 15px;
+        padding: 16px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-color);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .historial-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.08);
+    }
+    
+    /* Encabezado de tarjeta móvil */
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .card-date {
+        font-size: 0.9rem;
+        color: var(--text-light);
+        font-weight: 500;
+    }
+    
+    .card-client {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 6px;
+    }
+    
+    /* Elementos de la tarjeta móvil */
+    .card-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+    
+    .card-label {
+        color: var(--text-light);
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .card-value {
+        font-weight: 500;
+        color: var(--text-color);
+    }
+    
+    /* Pie de tarjeta móvil */
+    .card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 15px;
+        padding-top: 10px;
+        border-top: 1px solid var(--border-color);
+    }
+    
+    /* Enlace de acción en tarjetas móviles */
+    .card-accion-link {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .card-accion-link:hover {
+        background-color: var(--primary-dark);
+        transform: translateY(-2px);
+    }
+    
+    /* Diseño responsivo para tabletas */
+    @media (max-width: 1024px) {
+        .stats-container {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+        }
+    }
+    
+    /* Diseño responsivo para móviles */
+    @media (max-width: 768px) {
+        .table-container {
+            display: none;
+        }
+        
+        .mobile-cards {
+            display: block;
+        }
+        
+        .historial-card {
+            margin-bottom: 15px;
+        }
+        
+        .stats-container {
+            margin-bottom: 25px;
+        }
+        
+        .search-filter {
+            margin-bottom: 25px;
+            max-width: 100%;
+        }
+    }
+    
+    /* Diseño responsivo para móviles pequeños */
+    @media (max-width: 480px) {
+        .stats-container {
+            grid-template-columns: 1fr;
+        }
+        
+        .stat-card {
+            padding: 15px;
+        }
+        
+        .stat-value {
+            font-size: 1.75rem;
+        }
+        
+        .stat-icon {
+            font-size: 1.25rem;
+        }
+        
+        .historial-card {
+            padding: 14px;
+        }
+        
+        .card-client {
+            font-size: 1rem;
+        }
+        
+        .estado-badge {
+            padding: 4px 10px;
+            font-size: 0.75rem;
+        }
+        
+        .filter-input {
+            padding: 10px 10px 10px 35px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Contenedor principal del historial -->
+<div class="historial-container">
+    <!-- Buscador -->
+    <div class="search-filter">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Buscar por número o cliente..." class="filter-input" id="searchHistorial">
+    </div>
+    
+    <!-- Estadísticas en bloques -->
+    <div class="stats-container">
+        <!-- Estadística: montajes de hoy -->
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-calendar-day"></i>
+            </div>
+            <h3 class="stat-title">Finalizados Hoy</h3>
+            <div class="stat-value">{{ estadisticas.hoy }}</div>
+        </div>
+        
+        <!-- Estadística: montajes de la semana -->
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-calendar-week"></i>
+            </div>
+            <h3 class="stat-title">Finalizados Semana</h3>
+            <div class="stat-value">{{ estadisticas.semana }}</div>
+        </div>
+        
+        <!-- Estadística: montajes del mes -->
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+            <h3 class="stat-title">Finalizados Mes</h3>
+            <div class="stat-value">{{ estadisticas.mes }}</div>
+        </div>
+        
+        <!-- Estadística: montajes totales -->
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <h3 class="stat-title">Finalizados Totales</h3>
+            <div class="stat-value">{{ estadisticas.totales }}</div>
+        </div>
+    </div>
+    
+    <!-- Tabla de historial (vista escritorio) -->
+    <div class="table-container">
+        <table class="historial-table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Cliente</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="historialTableBody">
+                {% for montaje in montajes %}
+                <tr class="historial-row">
+                    <td>{{ montaje.fecha_montaje|date:"d/m/Y" }}</td>
+                    <td>{{ montaje.cliente }}</td>
+                    <td>{{ montaje.get_tipo_display }}</td>
+                    <td>
+                        <span class="estado-badge 
+                            {% if montaje.estado == 'Pendiente' %}estado-pendiente
+                            {% elif montaje.estado == 'En proceso' %}estado-en-proceso
+                            {% elif montaje.estado == 'Finalizado' %}estado-completado
+                            {% endif %}">
+                            {{ montaje.estado }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'detalle_montaje' montaje.id %}" class="accion-link">
+                            <i class="fas fa-eye"></i> Ver detalles
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="empty-message">No hay montajes registrados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Vista móvil en tarjetas -->
+    <div class="mobile-cards" id="mobileHistorialCards">
+        {% if montajes %}
+            {% for montaje in montajes %}
+            <div class="historial-card historial-row">
+                <div class="card-header">
+                    <div class="card-client">{{ montaje.cliente }}</div>
+                    <div class="card-date">{{ montaje.fecha_montaje|date:"d/m/Y" }}</div>
+                </div>
+                <div class="card-item">
+                    <div class="card-label">Tipo:</div>
+                    <div class="card-value">{{ montaje.get_tipo_display }}</div>
+                </div>
+                <div class="card-footer">
+                    <span class="estado-badge 
+                        {% if montaje.estado == 'Pendiente' %}estado-pendiente
+                        {% elif montaje.estado == 'En proceso' %}estado-en-proceso
+                        {% elif montaje.estado == 'Finalizado' %}estado-completado
+                        {% endif %}">
+                        {{ montaje.estado }}
+                    </span>
+                    <a href="{% url 'detalle_montaje' montaje.id %}" class="card-accion-link">
+                        <i class="fas fa-eye"></i> Ver detalles
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-message">No hay montajes registrados.</div>
+        {% endif %}
+        
+        <!-- Mensaje de no resultados para búsquedas -->
+        <div class="empty-message no-results-historial" style="display: none;">
+            No se encontraron resultados
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Búsqueda en tiempo real
+        const searchInput = document.getElementById('searchHistorial');
+        const historialRows = document.querySelectorAll('.historial-row');
+        
+        if (searchInput && historialRows.length > 0) {
+            searchInput.addEventListener('keyup', function() {
+                const searchTerm = this.value.toLowerCase();
+                let visibleRows = 0;
+                
+                // Filtrar filas según el término de búsqueda
+                historialRows.forEach(row => {
+                    const textContent = row.textContent.toLowerCase();
+                    if (textContent.includes(searchTerm)) {
+                        row.style.display = '';
+                        visibleRows++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+                
+                // Mostrar mensaje de no resultados
+                const tableBody = document.getElementById('historialTableBody');
+                const mobileCards = document.getElementById('mobileHistorialCards');
+                const noResultsTable = document.querySelector('.no-results-historial');
+                const noResultsCards = document.querySelector('.mobile-cards .no-results-historial');
+                
+                // Actualizar mensaje en tabla
+                if (visibleRows === 0) {
+                    if (tableBody) {
+                        let noResultsTableRow = tableBody.querySelector('.no-results-historial');
+                        if (!noResultsTableRow) {
+                            const emptyRow = document.createElement('tr');
+                            emptyRow.className = 'no-results-historial';
+                            emptyRow.innerHTML = `<td colspan="5" class="empty-message">No se encontraron resultados para "${searchTerm}"</td>`;
+                            tableBody.appendChild(emptyRow);
+                        } else {
+                            const emptyMessage = noResultsTableRow.querySelector('td');
+                            if (emptyMessage) {
+                                emptyMessage.textContent = `No se encontraron resultados para "${searchTerm}"`;
+                            }
+                            noResultsTableRow.style.display = '';
+                        }
+                    }
+                    
+                    // Actualizar mensaje en tarjetas
+                    if (noResultsCards) {
+                        noResultsCards.textContent = `No se encontraron resultados para "${searchTerm}"`;
+                        noResultsCards.style.display = 'block';
+                    }
+                } else {
+                    // Ocultar mensajes si hay resultados
+                    const noResultsTableRow = tableBody?.querySelector('.no-results-historial');
+                    if (noResultsTableRow) {
+                        noResultsTableRow.style.display = 'none';
+                    }
+                    
+                    if (noResultsCards) {
+                        noResultsCards.style.display = 'none';
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

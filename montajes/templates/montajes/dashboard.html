@@ -1,0 +1,48 @@
+{% extends 'montajes/base_dashboard.html' %}
+
+{% block title %}Dashboard | Gestión de Montajes{% endblock %}
+
+{% block page_title %}Montajes{% endblock %}
+
+{% block content %}
+<!-- Contenedor principal de la tarjeta de datos -->
+<div class="card">
+    <!-- Encabezado de la tarjeta con título y enlace de acción -->
+    <div class="card-header">
+        <h2 class="card-title">Montajes Recientes</h2>
+        <a href="#" class="action-link">Ver todos</a>
+    </div>
+    
+    <!-- Tabla de montajes recientes -->
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Número de Serie</th>
+                <th>Cliente</th>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Iteración sobre la lista de montajes -->
+            {% for montaje in montajes %}
+            <tr>
+                <td>{{ montaje.numero_serie }}</td>
+                <td>{{ montaje.cliente }}</td>
+                <td>{{ montaje.fecha_montaje|date:"d/m/Y" }}</td>
+                <td>{{ montaje.estado }}</td>
+                <td>
+                    <a href="{% url 'detalle_montaje' montaje.id %}" class="text-blue-600 hover:text-blue-800">Ver detalles</a>
+                </td>
+            </tr>
+            {% empty %}
+            <!-- Mensaje cuando no hay montajes -->
+            <tr>
+                <td colspan="5" style="text-align: center;">No hay montajes registrados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

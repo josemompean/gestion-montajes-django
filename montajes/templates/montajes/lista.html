@@ -1,0 +1,76 @@
+{% extends 'montajes/base_dashboard.html' %}
+
+{% block title %}Dashboard | Gestión de Montajes{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Cuadrícula de estadísticas -->
+<div class="dashboard-grid">
+    <!-- Tarjeta de estadística: Total de montajes -->
+    <div class="stat-card">
+        <div class="stat-value">{{ total_montajes|default:"0" }}</div>
+        <div class="stat-label">Total de Montajes</div>
+        <div class="stat-change positive">
+            <i class="fas fa-arrow-up"></i> 2.1% más que el mes pasado
+        </div>
+    </div>
+    
+    <!-- Tarjeta de estadística: Montajes pendientes -->
+    <div class="stat-card">
+        <div class="stat-value">{{ montajes_pendientes|default:"0" }}</div>
+        <div class="stat-label">Montajes Pendientes</div>
+        <div class="stat-change negative">
+            <i class="fas fa-arrow-down"></i> 1.5% menos que el mes pasado
+        </div>
+    </div>
+    
+    <!-- Tarjeta de estadística: Montajes finalizados -->
+    <div class="stat-card">
+        <div class="stat-value">{{ montajes_finalizados|default:"0" }}</div>
+        <div class="stat-label">Montajes Finalizados</div>
+        <div class="stat-change positive">
+            <i class="fas fa-arrow-up"></i> 3.2% más que el mes pasado
+        </div>
+    </div>
+</div>
+
+<!-- Tarjeta con listado de montajes recientes -->
+<div class="card">
+    <!-- Encabezado de la tarjeta -->
+    <div class="card-header">
+        <h2 class="card-title">Montajes Recientes</h2>
+        <a href="#" class="action-link">Ver todos</a>
+    </div>
+    
+    <!-- Tabla de datos de montajes -->
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Número de Serie</th>
+                <th>Cliente</th>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Listado de montajes -->
+            {% for montaje in montajes %}
+            <tr>
+                <td>{{ montaje.numero_serie }}</td>
+                <td>{{ montaje.cliente }}</td>
+                <td>{{ montaje.fecha_montaje|date:"d/m/Y" }}</td>
+                <td>{{ montaje.estado }}</td>
+                <td><a href="#" class="action-link">Ver detalles</a></td>
+            </tr>
+            {% empty %}
+            <!-- Mensaje cuando no hay montajes -->
+            <tr>
+                <td colspan="5" style="text-align: center;">No hay montajes registrados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

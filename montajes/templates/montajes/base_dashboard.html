@@ -1,0 +1,704 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <!-- Configuración básica del documento -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{% block title %}Gestión de Montajes{% endblock %}</title>
+    
+    <!-- Recursos externos: fuentes, iconos y hojas de estilo -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/estilos.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/dashboard.css' %}">
+    {% block extra_css %}{% endblock %}
+    
+    <!-- Estilos CSS internos -->
+    <style>
+        /* Estilos para elementos de administración */
+        .admin-menu-item {
+            font-weight: 600;
+        }
+        
+        .admin-menu-item i {
+            color: #FFD700 !important;
+        }
+        
+        .admin-menu-item:hover {
+            background-color: rgba(255, 215, 0, 0.15);
+        }
+        
+        .admin-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 8px;
+        }
+        
+        /* Estilos de la barra lateral */
+        .sidebar {
+            background: #1E293B;
+            background-image: linear-gradient(135deg, rgba(30, 41, 59, 0.97), rgba(17, 24, 39, 0.97)), 
+                              url("{% static 'img/sidebar-pattern.svg' %}");
+            background-size: cover;
+            background-blend-mode: overlay;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Borde luminoso en el lateral derecho de la barra lateral */
+        .sidebar::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(to bottom, 
+                rgba(59, 130, 246, 0.4), 
+                rgba(16, 185, 129, 0.4), 
+                rgba(59, 130, 246, 0));
+            z-index: 5;
+        }
+        
+        /* Contenedor del logo */
+        .logo-container {
+            position: relative;
+            padding: 30px 24px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-bottom: 1px solid rgba(234, 233, 255, 0.05);
+        }
+        
+        /* Línea gradiente debajo del logo */
+        .logo-container::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 15%;
+            right: 15%;
+            height: 1px;
+            background: linear-gradient(to right, 
+                rgba(255, 255, 255, 0), 
+                rgba(59, 130, 246, 0.3), 
+                rgba(16, 185, 129, 0.3), 
+                rgba(255, 255, 255, 0));
+        }
+        
+        /* Estructura del logo */
+        .logo {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        
+        /* Icono del logo con efectos visuales */
+        .logo-icon {
+            font-size: 30px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 64px;
+            width: 64px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.07);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+            transition: all 0.5s ease;
+            overflow: hidden;
+        }
+        
+        /* Borde gradiente del icono */
+        .logo-icon::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 16px;
+            padding: 2px;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: destination-out;
+            mask-composite: exclude;
+        }
+        
+        /* Ícono con efecto de texto gradiente */
+        .logo-icon i {
+            font-size: 28px;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 3;
+        }
+        
+        /* Efectos hover para el logo */
+        .logo-container:hover .logo-icon {
+            transform: rotate(12deg) scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .logo-container:hover .logo-icon i {
+            transform: translate(-50%, -50%) rotate(-12deg);
+        }
+        
+        /* Texto del logo con efecto gradiente */
+        .logo-text {
+            font-weight: 700;
+            font-size: 22px;
+            line-height: 1.2;
+            background: linear-gradient(45deg, #fff, #d4d4d8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+            position: relative;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        
+        /* Línea animada bajo el texto del logo */
+        .logo-text::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -4px;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s ease;
+        }
+        
+        .logo-container:hover .logo-text::after {
+            transform: scaleX(1);
+        }
+        
+        /* Subtítulo del logo */
+        .logo-subtitle {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 6px;
+            letter-spacing: 1px;
+        }
+        
+        /* Menú de la barra lateral */
+        .sidebar-menu {
+            margin-top: 10px;
+            padding: 0 16px;
+        }
+        
+        /* Secciones del menú */
+        .menu-section {
+            margin-bottom: 28px;
+        }
+        
+        /* Encabezados de sección del menú */
+        .menu-header {
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 1.5px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 16px;
+            padding-left: 18px;
+            font-weight: 600;
+        }
+        
+        /* Elementos del menú con efectos interactivos */
+        .menu-item {
+            margin-bottom: 8px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            color: rgba(255, 255, 255, 0.75);
+            text-decoration: none;
+        }
+        
+        /* Efecto de brillo al pasar el cursor */
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.05), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1;
+        }
+        
+        /* Estilos hover para elementos del menú */
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.07);
+            transform: translateX(3px);
+            color: white;
+        }
+        
+        .menu-item:hover::before {
+            opacity: 1;
+        }
+        
+        .menu-item span {
+            position: relative;
+            z-index: 2;
+            transition: transform 0.3s ease;
+        }
+        
+        .menu-item:hover span {
+            transform: translateX(2px);
+        }
+        
+        /* Iconos en elementos del menú */
+        .menu-item i {
+            position: relative;
+            z-index: 2;
+            width: 24px;
+            margin-right: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+        
+        .menu-item:hover i {
+            transform: scale(1.1);
+            color: var(--primary-color);
+        }
+        
+        /* Estilos para el elemento de menú activo */
+        .menu-item.active {
+            background: rgba(59, 130, 246, 0.15);
+            color: white;
+            font-weight: 500;
+            box-shadow: none;
+        }
+        
+        .menu-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), transparent);
+            opacity: 0.1;
+            z-index: 1;
+        }
+        
+        .menu-item.active::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+            border-radius: 0 4px 4px 0;
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+        }
+        
+        .menu-item.active i {
+            color: var(--primary-color);
+        }
+        
+        /* Separador de menú */
+        .menu-divider {
+            height: 1px;
+            background: linear-gradient(to right, 
+                rgba(255, 255, 255, 0), 
+                rgba(255, 255, 255, 0.1), 
+                rgba(255, 255, 255, 0));
+            margin: 20px 0;
+        }
+        
+        /* Pie de página de la barra lateral */
+        .sidebar-footer {
+            padding: 18px 16px;
+            display: flex;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.35);
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: auto;
+            position: relative;
+        }
+        
+        /* Línea gradiente sobre el pie de página */
+        .sidebar-footer::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 15%;
+            right: 15%;
+            height: 1px;
+            background: linear-gradient(to right, 
+                rgba(255, 255, 255, 0), 
+                rgba(59, 130, 246, 0.2), 
+                rgba(16, 185, 129, 0.2), 
+                rgba(255, 255, 255, 0));
+        }
+        
+        /* Versión de la aplicación */
+        .version {
+            position: relative;
+            padding: 4px 10px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .version:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.6);
+            transform: translateY(-2px);
+        }
+        
+        /* Botón de cerrar sesión */
+        .logout-btn {
+            color: rgba(255, 107, 107, 0.9) !important;
+            font-weight: 500;
+            padding: 12px 16px;
+            transition: all 0.3s ease !important;
+            border: 1px solid transparent !important;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255, 107, 107, 0.1) !important;
+            border: 1px solid rgba(255, 107, 107, 0.2) !important;
+            transform: translateX(3px);
+        }
+        
+        .logout-btn i {
+            color: rgba(255, 107, 107, 0.9) !important;
+            transition: transform 0.3s ease;
+        }
+        
+        .logout-btn:hover i {
+            transform: translateX(3px) scale(1.1);
+            color: rgb(255, 107, 107) !important;
+        }
+        
+        /* Botón para mostrar/ocultar la barra lateral en móviles */
+        .toggle-sidebar {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 10px;
+        }
+        
+        /* Overlay para cuando se abre el menú en móviles */
+        .mobile-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            backdrop-filter: blur(3px);
+        }
+        
+        .mobile-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+        
+        /* Estilos responsivos para dispositivos medianos */
+        @media (max-width: 1024px) {
+            /* Ajustes de barra lateral para pantallas medianas */
+            .sidebar {
+                position: fixed;
+                left: -280px;
+                height: 100%;
+                transition: left 0.3s ease;
+                z-index: 1000;
+                box-shadow: none;
+            }
+            
+            .sidebar.open {
+                left: 0;
+                box-shadow: 5px 0 25px rgba(0, 0, 0, 0.3);
+            }
+            
+            /* Mostrar botón de toggle en pantallas medianas */
+            .toggle-sidebar {
+                display: block;
+                font-size: 20px;
+                color: var(--text-color);
+                background: transparent;
+                border: none;
+                cursor: pointer;
+                padding: 10px;
+                margin-right: 8px;
+                border-radius: 8px;
+                transition: all 0.3s ease;
+            }
+            
+            .toggle-sidebar:hover {
+                background: rgba(59, 130, 246, 0.1);
+                color: var(--primary-color);
+            }
+            
+            /* Mostrar overlay cuando la barra lateral está abierta */
+            .sidebar.open + .mobile-overlay {
+                display: block;
+                opacity: 1;
+            }
+        }
+        
+        /* Estilos responsivos para dispositivos pequeños */
+        @media (max-width: 480px) {
+            /* Ajustes para perfil de usuario en móviles */
+            .user-profile {
+                padding: 5px 8px;
+                gap: 5px;
+            }
+            
+            .avatar {
+                width: 32px;
+                height: 32px;
+            }
+            
+            .notifications {
+                padding: 5px;
+            }
+            
+            /* Tamaño reducido del logo en móviles */
+            .logo-icon {
+                font-size: 26px;
+                height: 54px;
+                width: 54px;
+            }
+            
+            .logo-text {
+                font-size: 18px;
+            }
+            
+            /* Ajustes de menú para pantallas pequeñas */
+            .sidebar-menu {
+                padding: 0 12px;
+            }
+            
+            .menu-item {
+                padding: 10px 14px;
+            }
+            
+            .menu-header {
+                padding-left: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Contenedor principal del dashboard -->
+    <div class="dashboard-container">
+        <!-- Barra lateral con navegación -->
+        <div class="sidebar" id="sidebar">
+            <!-- Logo y título de la aplicación -->
+            <div class="logo-container">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <div class="logo-text">Gestión Montajes</div>
+                    <div class="logo-subtitle">Instalaciones & Servicios</div>
+                </div>
+            </div>
+            
+            <!-- Menú de navegación principal -->
+            <nav class="sidebar-menu">
+                <!-- Sección de gestión general -->
+                <div class="menu-section">
+                    <div class="menu-header">Gestión</div>
+                    <a href="{% url 'lista_montajes' %}" class="menu-item {% if active_menu == 'montajes' %}active{% endif %}">
+                        <i class="fas fa-wrench"></i>
+                        <span>Montajes</span>
+                    </a>
+                    
+                    <a href="{% url 'mis_montajes' %}" class="menu-item {% if active_menu == 'mis_montajes' %}active{% endif %}">
+                        <i class="fas fa-tasks"></i>
+                        <span>Mis Montajes</span>
+                    </a>
+                    
+                    <a href="{% url 'historial' %}" class="menu-item {% if active_menu == 'historial' %}active{% endif %}">
+                        <i class="fas fa-history"></i>
+                        <span>Historial</span>
+                    </a>
+                </div>
+                
+                <!-- Sección de administración (solo visible para staff) -->
+                {% if user.is_staff %}
+                <div class="menu-section">
+                    <div class="menu-header">Administración</div>
+                    <a href="{% url 'historial_admin' %}" class="menu-item admin-menu-item {% if active_menu == 'historial_admin' %}active{% endif %}">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Rendimiento Montadores</span>
+                    </a>
+                    <a href="{% url 'estadisticas_montajes' %}" class="menu-item admin-menu-item {% if active_menu == 'estadisticas_montajes' %}active{% endif %}">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Estadísticas Montajes</span>
+                    </a>
+                    <a href="/admin/" class="menu-item admin-menu-item">
+                        <i class="fas fa-lock"></i>
+                        <span>Panel Admin</span>
+                    </a>
+                </div>
+                {% endif %}
+                
+                <!-- Separador visual -->
+                <div class="menu-divider"></div>
+                
+                <!-- Formulario de cierre de sesión -->
+                <form method="POST" action="{% url 'logout' %}" style="margin: 0; padding: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="menu-item logout-btn" style="width: 100%; background: none; border: none; text-align: left; cursor: pointer;">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Cerrar Sesión</span>
+                    </button>
+                </form>
+            </nav>
+            
+            <!-- Pie de página de la barra lateral -->
+            <div class="sidebar-footer">
+                <div class="version">v1.0.0</div>
+            </div>
+        </div>
+        
+        <!-- Overlay para móviles (se activa cuando se abre el menú) -->
+        <div class="mobile-overlay" id="mobile-overlay"></div>
+        
+        <!-- Contenido principal del dashboard -->
+        <div class="main-content">
+            <!-- Cabecera con título de página y perfil de usuario -->
+            <header class="dashboard-header">
+                <div class="header-left">
+                    <!-- Botón de toggle para la barra lateral en móviles -->
+                    <button class="toggle-sidebar" id="toggle-sidebar">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                <div class="page-title">
+                    <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                    </div>
+                </div>
+                
+                <!-- Menú de usuario con perfil -->
+                <div class="user-menu">
+                    <div class="user-profile">
+                        <span>{{ user.username }}</span>
+                        <div class="avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        {% if user.is_staff %}<span class="admin-badge" title="Administrador"><i class="fas fa-crown" style="color: gold; font-size: 0.8em;"></i></span>{% endif %}
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Área principal de contenido -->
+            <div class="content-area">
+                <!-- Sistema de mensajes para notificaciones -->
+                {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                    <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <!-- Bloque para el contenido específico de cada página -->
+                {% block content %}{% endblock %}
+            </div>
+            
+            <!-- Pie de página del dashboard -->
+            <footer class="dashboard-footer">
+                <div>© {% now "Y" %} Gestión de Montajes</div>
+            
+            </footer>
+        </div>
+    </div>
+    
+    <!-- JavaScript para funcionalidades del dashboard -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Toggle sidebar en dispositivos móviles
+            const toggleBtn = document.getElementById('toggle-sidebar');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            
+            if (toggleBtn && sidebar && overlay) {
+                // Controla la apertura/cierre de la barra lateral
+                toggleBtn.addEventListener('click', function() {
+                    sidebar.classList.toggle('open');
+                    overlay.classList.toggle('active');
+                });
+                
+                // Cierra la barra lateral al hacer clic en el overlay
+                overlay.addEventListener('click', function() {
+                    sidebar.classList.remove('open');
+                    overlay.classList.remove('active');
+                });
+                
+                // Cierra la barra lateral al hacer clic en un elemento del menú (en móviles)
+                const menuItems = document.querySelectorAll('.sidebar-menu .menu-item');
+                menuItems.forEach(item => {
+                    item.addEventListener('click', function() {
+                        if (window.innerWidth <= 1024) {
+                            sidebar.classList.remove('open');
+                            overlay.classList.remove('active');
+                        }
+                    });
+                });
+                
+                // Gestión de eventos de redimensionamiento para responsive
+                window.addEventListener('resize', function() {
+                    if (window.innerWidth > 1024) {
+                        sidebar.classList.remove('open');
+                        overlay.classList.remove('active');
+                    }
+                });
+            }
+            
+            // Auto-ocultar mensajes después de 5 segundos con animación
+            const messages = document.querySelectorAll('.message');
+            messages.forEach(message => {
+                setTimeout(() => {
+                    message.style.opacity = '0';
+                    message.style.transform = 'translateY(-20px)';
+                    
+                    setTimeout(() => {
+                        message.style.display = 'none';
+                    }, 300);
+                }, 5000);
+            });
+        });
+    </script>
+    
+    <!-- Bloque para scripts adicionales específicos de cada página -->
+    {% block scripts %}{% endblock %}
+</body>
+</html>

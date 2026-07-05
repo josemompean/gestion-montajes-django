@@ -1,0 +1,408 @@
+{% extends 'montajes/base_dashboard.html' %}
+
+{% block title %}Montajes Pendientes | Gestión de Montajes{% endblock %}
+
+{% block page_title %}Montajes Pendientes{% endblock %}
+
+{% block content %}
+<!-- Cabecera con filtros y resumen -->
+<div class="header-actions">
+    <!-- Formulario de filtrado -->
+    <form id="filtroForm" method="get" action="{% url 'lista_montajes' %}" class="header-filters">
+        <div class="filter-group">
+            <!-- Filtro de búsqueda -->
+            <div class="search-filter">
+                <i class="fas fa-search"></i>
+                <input type="text" name="busqueda" value="{{ busqueda }}" placeholder="Buscar por número o cliente..." class="filter-input">
+            </div>
+            <!-- Filtro de ordenación -->
+            <div class="order-filter">
+                <i class="fas fa-sort"></i>
+                <select name="orden" class="filter-select">
+                    <option value="-fecha_montaje" {% if orden_actual == '-fecha_montaje' %}selected{% endif %}>Más recientes primero</option>
+                    <option value="fecha_montaje" {% if orden_actual == 'fecha_montaje' %}selected{% endif %}>Más antiguos primero</option>
+                    <option value="cliente" {% if orden_actual == 'cliente' %}selected{% endif %}>Cliente (A-Z)</option>
+                    <option value="-cliente" {% if orden_actual == '-cliente' %}selected{% endif %}>Cliente (Z-A)</option>
+                    <option value="numero_serie" {% if orden_actual == 'numero_serie' %}selected{% endif %}>Número de serie (A-Z)</option>
+                    <option value="-numero_serie" {% if orden_actual == '-numero_serie' %}selected{% endif %}>Número de serie (Z-A)</option>
+                </select>
+            </div>
+            <!-- Botones de acción del filtro -->
+            <button type="submit" class="btn-primary btn-sm">Aplicar</button>
+            {% if busqueda or orden_actual != '-fecha_montaje' %}
+                <a href="{% url 'lista_montajes' %}" class="btn-outline btn-sm">Limpiar</a>
+            {% endif %}
+        </div>
+    </form>
+    <!-- Resumen de montajes disponibles -->
+    <div class="summary-info">
+        <div class="summary-item">
+            <div class="summary-icon">
+                <i class="fas fa-wrench"></i>
+            </div>
+            <div class="summary-text">
+                <div class="summary-value">{{ montajes.count }}</div>
+                <div class="summary-label">Montajes disponibles</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tarjeta principal con lista de montajes -->
+<div class="card">
+    <!-- Encabezado de la tarjeta -->
+    <div class="card-header">
+        <h2 class="card-title"><i class="fas fa-tools"></i> Montajes Disponibles</h2>
+        <div class="card-actions">
+            {% if busqueda %}
+                <div class="filter-badge">
+                    <i class="fas fa-search"></i>
+                    <span>Búsqueda: "{{ busqueda }}"</span>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    {% if montajes %}
+    <!-- Tabla de montajes disponibles -->
+    <div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th><i class="fas fa-hashtag"></i> Número de Serie</th>
+                <th><i class="fas fa-user"></i> Cliente</th>
+                <th><i class="fas fa-calendar-alt"></i> Fecha Registro</th>
+                <th><i class="fas fa-info-circle"></i> Estado</th>
+                <th class="text-center"><i class="fas fa-cog"></i> Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for montaje in montajes %}
+                <tr class="montaje-row" data-id="{{ montaje.id }}">
+                    <td data-label="Número de Serie"><strong>{{ montaje.numero_serie }}</strong></td>
+                    <td data-label="Cliente">{{ montaje.cliente }}</td>
+                    <td data-label="Fecha Registro">{{ montaje.fecha_montaje|date:"d/m/Y H:i" }}</td>
+                    <td data-label="Estado"><span class="badge-status pending">{{ montaje.estado }}</span></td>
+                    <td class="actions text-center" data-label="Acciones">
+                        <!-- Acción de ver detalles -->
+                        <div class="action-tooltip">
+                            <a href="{% url 'detalle_montaje' montaje.id %}" class="btn-action view">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                            <span>Ver detalles</span>
+                        </div>
+                        <!-- Acción de iniciar montaje -->
+                        <div class="action-tooltip">
+                            <a href="{% url 'iniciar_montaje' montaje.id %}" class="btn-action start">
+                                <i class="fas fa-play-circle"></i>
+                    </a>
+                            <span>Iniciar</span>
+                        </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+    {% else %}
+    <!-- Estado vacío cuando no hay montajes -->
+    <div class="empty-state">
+        <div class="empty-icon">
+            <i class="fas fa-tools"></i>
+        </div>
+        <h3>No hay montajes pendientes</h3>
+        <p>Actualmente no hay montajes pendientes disponibles para iniciar.</p>
+        {% if busqueda %}
+            <a href="{% url 'lista_montajes' %}" class="btn-primary mt-3">
+                <i class="fas fa-undo"></i> Limpiar filtros
+            </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Búsqueda en tiempo real
+        const searchInput = document.getElementById('searchInput');
+        const montajeRows = document.querySelectorAll('.montaje-row');
+        
+        if (searchInput && montajeRows.length > 0) {
+            searchInput.addEventListener('keyup', function() {
+                const searchTerm = this.value.toLowerCase();
+                
+                // Filtrar filas basado en el término de búsqueda
+                montajeRows.forEach(row => {
+                    const textContent = row.textContent.toLowerCase();
+                    if (textContent.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+                
+                // Mostrar mensaje cuando no hay resultados
+                let visibleRows = 0;
+                montajeRows.forEach(row => {
+                    if (row.style.display !== 'none') {
+                        visibleRows++;
+                    }
+                });
+                
+                const tableContainer = document.querySelector('.table-container');
+                let noResultsMsg = document.querySelector('.no-results-message');
+                
+                // Gestión del mensaje de no resultados
+                if (visibleRows === 0) {
+                    if (!noResultsMsg) {
+                        noResultsMsg = document.createElement('div');
+                        noResultsMsg.className = 'empty-state no-results-message';
+                        noResultsMsg.innerHTML = `
+                            <div class="empty-icon">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <h3>No se encontraron resultados</h3>
+                            <p>No hay montajes que coincidan con "${searchTerm}"</p>
+                        `;
+                        tableContainer.insertAdjacentElement('afterend', noResultsMsg);
+                    } else {
+                        noResultsMsg.querySelector('p').textContent = `No hay montajes que coincidan con "${searchTerm}"`;
+                        noResultsMsg.style.display = 'flex';
+                    }
+                } else if (noResultsMsg) {
+                    noResultsMsg.style.display = 'none';
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Contenedor de cabecera con filtros y acciones */
+    .header-actions {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    
+    /* Contenedor de filtros */
+    .header-filters {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    /* Grupo de filtros */
+    .filter-group {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    
+    /* Estilos para los filtros de búsqueda y ordenación */
+    .search-filter, .order-filter {
+        display: flex;
+        align-items: center;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+    
+    .search-filter i, .order-filter i {
+        color: var(--primary-color);
+        padding: 0 10px;
+    }
+    
+    /* Campos de entrada de filtros */
+    .filter-input, .filter-select {
+        border: none;
+        padding: 8px 12px;
+        background: transparent;
+        outline: none;
+        min-width: 200px;
+    }
+    
+    .filter-select {
+        cursor: pointer;
+    }
+    
+    /* Botones pequeños */
+    .btn-sm {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+    
+    /* Botón de contorno */
+    .btn-outline {
+        background: transparent;
+        border: 1px solid var(--primary-color);
+        color: var(--primary-color);
+        border-radius: 8px;
+        padding: 8px 16px;
+        cursor: pointer;
+        transition: var(--transition);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .btn-outline:hover {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    /* Insignia de filtro activo */
+    .filter-badge {
+        display: flex;
+        align-items: center;
+        background-color: rgba(var(--primary-rgb), 0.1);
+        color: var(--primary-color);
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 14px;
+        gap: 6px;
+    }
+    
+    /* Contenedor de información resumida */
+    .summary-info {
+        display: flex;
+        gap: 15px;
+    }
+    
+    /* Elemento de resumen */
+    .summary-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        padding: 15px 20px;
+        border-radius: 12px;
+        color: white;
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+        min-width: 220px;
+    }
+    
+    /* Margen superior */
+    .mt-3 {
+        margin-top: 12px;
+    }
+    
+    /* Iconos de resumen */
+    .summary-icon {
+        background: rgba(255, 255, 255, 0.2);
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+        position: relative;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .summary-icon i {
+        font-size: 22px;
+        color: white;
+    }
+    
+    /* Texto de resumen */
+    .summary-text {
+        z-index: 2;
+        position: relative;
+    }
+    
+    .summary-value {
+        font-size: 26px;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    
+    .summary-label {
+        font-size: 14px;
+        opacity: 0.9;
+        font-weight: 500;
+    }
+    
+    /* Caja de búsqueda */
+    .search-box {
+        position: relative;
+        width: 250px;
+    }
+    
+    .search-box i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-lighter);
+    }
+    
+    .search-input {
+        width: 100%;
+        padding: 10px 12px 10px 35px;
+        border: 1px solid var(--border-color);
+        border-radius: 50px;
+        font-size: 14px;
+        background-color: white;
+        transition: var(--transition);
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+    
+    /* Mensaje de no resultados */
+    .no-results-message {
+        margin-top: 20px;
+    }
+    
+    /* Responsividad para tabletas */
+    @media (max-width: 768px) {
+        .summary-value {
+            font-size: 22px;
+        }
+        
+        .summary-icon {
+            width: 40px;
+            height: 40px;
+        }
+        
+        .summary-icon i {
+            font-size: 18px;
+        }
+        
+        .summary-item {
+            padding: 12px 15px;
+        }
+    }
+    
+    /* Responsividad para móviles */
+    @media (max-width: 480px) {
+        .summary-value {
+            font-size: 20px;
+        }
+        
+        .summary-label {
+            font-size: 12px;
+        }
+        
+        .filter-item {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+    }
+</style>
+{% endblock %} 

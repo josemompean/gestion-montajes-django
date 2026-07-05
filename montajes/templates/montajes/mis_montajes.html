@@ -1,0 +1,783 @@
+{% extends 'montajes/base_dashboard.html' %}
+
+{% block title %}Mis Montajes | Gestión de Montajes{% endblock %}
+
+{% block page_title %}Mis Montajes{% endblock %}
+
+{% block content %}
+<!-- Cabecera con acciones y filtros -->
+<div class="header-actions">
+    <!-- Formulario de filtrado -->
+    <form id="filtroForm" method="get" action="{% url 'mis_montajes' %}" class="header-filters">
+        <div class="filter-group">
+            <!-- Filtro de búsqueda -->
+            <div class="search-filter">
+                <i class="fas fa-search"></i>
+                <input type="text" name="busqueda" value="{{ busqueda }}" placeholder="Buscar por número o cliente..." class="filter-input">
+            </div>
+            <!-- Filtro de ordenación -->
+            <div class="order-filter">
+                <i class="fas fa-sort"></i>
+                <select name="orden" class="filter-select">
+                    <option value="-fecha_montaje" {% if orden_actual == '-fecha_montaje' %}selected{% endif %}>Más recientes primero</option>
+                    <option value="fecha_montaje" {% if orden_actual == 'fecha_montaje' %}selected{% endif %}>Más antiguos primero</option>
+                    <option value="cliente" {% if orden_actual == 'cliente' %}selected{% endif %}>Cliente (A-Z)</option>
+                    <option value="-cliente" {% if orden_actual == '-cliente' %}selected{% endif %}>Cliente (Z-A)</option>
+                    <option value="numero_serie" {% if orden_actual == 'numero_serie' %}selected{% endif %}>Número de serie (A-Z)</option>
+                    <option value="-numero_serie" {% if orden_actual == '-numero_serie' %}selected{% endif %}>Número de serie (Z-A)</option>
+                    <option value="-fecha_inicio" {% if orden_actual == '-fecha_inicio' %}selected{% endif %}>Fecha inicio (reciente)</option>
+                    <option value="fecha_inicio" {% if orden_actual == 'fecha_inicio' %}selected{% endif %}>Fecha inicio (antigua)</option>
+                    <option value="-fecha_finalizacion" {% if orden_actual == '-fecha_finalizacion' %}selected{% endif %}>Fecha fin (reciente)</option>
+                    <option value="fecha_finalizacion" {% if orden_actual == 'fecha_finalizacion' %}selected{% endif %}>Fecha fin (antigua)</option>
+                </select>
+            </div>
+            <!-- Filtro por estado -->
+            <div class="estado-filter">
+                <i class="fas fa-filter"></i>
+                <select name="estado" class="filter-select">
+                    <option value="" {% if estado_filtro == '' %}selected{% endif %}>Todos los estados</option>
+                    <option value="En proceso" {% if estado_filtro == 'En proceso' %}selected{% endif %}>En proceso</option>
+                    <option value="Finalizado" {% if estado_filtro == 'Finalizado' %}selected{% endif %}>Finalizado</option>
+                </select>
+            </div>
+            <!-- Botones de acción para los filtros -->
+            <button type="submit" class="btn-primary btn-sm">Aplicar</button>
+            {% if busqueda or estado_filtro or orden_actual != '-fecha_montaje' %}
+                <a href="{% url 'mis_montajes' %}" class="btn-outline btn-sm">Limpiar</a>
+            {% endif %}
+        </div>
+    </form>
+    <!-- Resumen de montajes por estado -->
+    <div class="summary-info">
+        <!-- Resumen de montajes en proceso -->
+        <div class="summary-item progress">
+            <div class="summary-icon">
+                <i class="fas fa-spinner"></i>
+            </div>
+            <div class="summary-text">
+                <div class="summary-value">
+                    {% if modo_filtro %}
+                        {{ montajes_en_proceso.count }}
+                    {% else %}
+                        {{ total_montajes_en_proceso }}
+                    {% endif %}
+                </div>
+                <div class="summary-label">En proceso</div>
+            </div>
+        </div>
+        <!-- Resumen de montajes finalizados -->
+        <div class="summary-item completed">
+            <div class="summary-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="summary-text">
+                <div class="summary-value">
+                    {% if modo_filtro %}
+                        {{ montajes_finalizados.count }}
+                    {% else %}
+                        {{ total_montajes_finalizados }}
+                    {% endif %}
+                </div>
+                <div class="summary-label">Finalizados</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if modo_filtro %}
+<!-- Vista de Montajes Filtrados -->
+<div class="card">
+    <!-- Encabezado de la tarjeta con filtros activos -->
+    <div class="card-header">
+        <h2 class="card-title"><i class="fas fa-filter"></i> Montajes Filtrados</h2>
+        <div class="card-actions">
+            {% if busqueda %}
+                <div class="filter-badge">
+                    <i class="fas fa-search"></i>
+                    <span>Búsqueda: "{{ busqueda }}"</span>
+                </div>
+            {% endif %}
+            {% if estado_filtro %}
+                <div class="filter-badge">
+                    <i class="fas fa-filter"></i>
+                    <span>Estado: {{ estado_filtro }}</span>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    {% if montajes_filtrados %}
+    <!-- Tabla de montajes filtrados -->
+    <div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th><i class="fas fa-hashtag"></i> Número de Serie</th>
+                <th><i class="fas fa-user"></i> Cliente</th>
+                <th><i class="fas fa-calendar-alt"></i> Fecha Inicio</th>
+                {% if not estado_filtro or estado_filtro == 'Finalizado' %}
+                <th><i class="fas fa-flag-checkered"></i> Fecha Finalización</th>
+                {% endif %}
+                <th><i class="fas fa-info-circle"></i> Estado</th>
+                <th class="text-center"><i class="fas fa-cog"></i> Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for montaje in montajes_filtrados %}
+                <tr class="montaje-row" data-id="{{ montaje.id }}">
+                    <td data-label="Número de Serie"><strong>{{ montaje.numero_serie }}</strong></td>
+                    <td data-label="Cliente">{{ montaje.cliente }}</td>
+                    <td data-label="Fecha Inicio">{{ montaje.fecha_inicio|date:"d/m/Y H:i" }}</td>
+                    {% if not estado_filtro or estado_filtro == 'Finalizado' %}
+                    <td data-label="Fecha Finalización">
+                        {% if montaje.fecha_finalizacion %}
+                            {{ montaje.fecha_finalizacion|date:"d/m/Y H:i" }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                    <td data-label="Estado">
+                        {% if montaje.estado == 'En proceso' %}
+                            <span class="badge-status in-progress">{{ montaje.estado }}</span>
+                        {% elif montaje.estado == 'Finalizado' %}
+                            <span class="badge-status completed">{{ montaje.estado }}</span>
+                        {% else %}
+                            <span class="badge-status pending">{{ montaje.estado }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="actions text-center" data-label="Acciones">
+                        <!-- Acción: Ver detalles -->
+                        <div class="action-tooltip">
+                            <a href="{% url 'detalle_montaje' montaje.id %}" class="btn-action view">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <span>Ver detalles</span>
+                        </div>
+                        {% if montaje.estado == 'En proceso' %}
+                        <!-- Acción: Finalizar montaje -->
+                        <div class="action-tooltip">
+                            <a href="{% url 'finalizar_montaje' montaje.id %}" class="btn-action finish">
+                                <i class="fas fa-check-circle"></i>
+                            </a>
+                            <span>Finalizar</span>
+                        </div>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% else %}
+    <!-- Estado vacío cuando no hay montajes que coincidan con los filtros -->
+    <div class="empty-state">
+        <div class="empty-icon">
+            <i class="fas fa-search"></i>
+        </div>
+        <h3>No se encontraron montajes</h3>
+        <p>No hay montajes que coincidan con los criterios de búsqueda aplicados.</p>
+        <a href="{% url 'mis_montajes' %}" class="btn-primary mt-3">
+            <i class="fas fa-undo"></i> Limpiar filtros
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% else %}
+<!-- Montajes en proceso -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fas fa-spinner"></i> Montajes en Proceso</h2>
+    </div>
+    
+    {% if montajes_en_proceso %}
+    <div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th><i class="fas fa-hashtag"></i> Número de Serie</th>
+                <th><i class="fas fa-user"></i> Cliente</th>
+                <th><i class="fas fa-calendar-alt"></i> Fecha Inicio</th>
+                <th><i class="fas fa-info-circle"></i> Estado</th>
+                <th class="text-center"><i class="fas fa-cog"></i> Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for montaje in montajes_en_proceso %}
+                <tr class="montaje-row en-proceso-row" data-id="{{ montaje.id }}">
+                    <td data-label="Número de Serie"><strong>{{ montaje.numero_serie }}</strong></td>
+                    <td data-label="Cliente">{{ montaje.cliente }}</td>
+                    <td data-label="Fecha Inicio">{{ montaje.fecha_inicio|date:"d/m/Y H:i" }}</td>
+                    <td data-label="Estado"><span class="badge-status in-progress">{{ montaje.estado }}</span></td>
+                    <td class="actions text-center" data-label="Acciones">
+                        <div class="action-tooltip">
+                            <a href="{% url 'detalle_montaje' montaje.id %}" class="btn-action view">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <span>Ver detalles</span>
+                        </div>
+                        <div class="action-tooltip">
+                            <a href="{% url 'finalizar_montaje' montaje.id %}" class="btn-action finish">
+                                <i class="fas fa-check-circle"></i>
+                            </a>
+                            <span>Finalizar</span>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <i class="fas fa-spinner"></i>
+        </div>
+        <h3>No hay montajes en proceso</h3>
+        <p>Actualmente no tienes montajes en proceso. Puedes iniciar nuevos montajes desde la sección "Montajes".</p>
+        <a href="{% url 'lista_montajes' %}" class="btn-primary">
+            <i class="fas fa-plus-circle"></i> Iniciar nuevo montaje
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Montajes finalizados -->
+<div class="card mt-6">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fas fa-check-circle"></i> Montajes Finalizados</h2>
+    </div>
+    
+    {% if montajes_finalizados %}
+    <div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th><i class="fas fa-hashtag"></i> Número de Serie</th>
+                <th><i class="fas fa-user"></i> Cliente</th>
+                <th><i class="fas fa-calendar-alt"></i> Fecha Inicio</th>
+                <th><i class="fas fa-flag-checkered"></i> Fecha Finalización</th>
+                <th><i class="fas fa-info-circle"></i> Estado</th>
+                <th class="text-center"><i class="fas fa-cog"></i> Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for montaje in montajes_finalizados %}
+                <tr class="montaje-row finalizado-row" data-id="{{ montaje.id }}">
+                    <td data-label="Número de Serie"><strong>{{ montaje.numero_serie }}</strong></td>
+                    <td data-label="Cliente">{{ montaje.cliente }}</td>
+                    <td data-label="Fecha Inicio">{{ montaje.fecha_inicio|date:"d/m/Y H:i" }}</td>
+                    <td data-label="Fecha Finalización">{{ montaje.fecha_finalizacion|date:"d/m/Y H:i" }}</td>
+                    <td data-label="Estado"><span class="badge-status completed">{{ montaje.estado }}</span></td>
+                    <td class="actions text-center" data-label="Acción">
+                        <div class="action-tooltip">
+                            <a href="{% url 'detalle_montaje' montaje.id %}" class="btn-action view">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <span>Ver detalles</span>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+    <!-- Paginación para montajes finalizados -->
+    <div class="pagination-container">
+        <div class="pagination">
+            {% if montajes_finalizados.has_previous %}
+                <a href="javascript:void(0);" data-page="1" class="pagination-link pagination-btn"><i class="fas fa-angle-double-left"></i></a>
+                <a href="javascript:void(0);" data-page="{{ montajes_finalizados.previous_page_number }}" class="pagination-link pagination-btn"><i class="fas fa-angle-left"></i></a>
+            {% else %}
+                <span class="pagination-link disabled"><i class="fas fa-angle-double-left"></i></span>
+                <span class="pagination-link disabled"><i class="fas fa-angle-left"></i></span>
+            {% endif %}
+            
+            <div class="pagination-info">
+                <span>Página {{ montajes_finalizados.number }} de {{ montajes_finalizados.paginator.num_pages }}</span>
+            </div>
+            
+            {% if montajes_finalizados.has_next %}
+                <a href="javascript:void(0);" data-page="{{ montajes_finalizados.next_page_number }}" class="pagination-link pagination-btn"><i class="fas fa-angle-right"></i></a>
+                <a href="javascript:void(0);" data-page="{{ montajes_finalizados.paginator.num_pages }}" class="pagination-link pagination-btn"><i class="fas fa-angle-double-right"></i></a>
+            {% else %}
+                <span class="pagination-link disabled"><i class="fas fa-angle-right"></i></span>
+                <span class="pagination-link disabled"><i class="fas fa-angle-double-right"></i></span>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <h3>No hay montajes finalizados</h3>
+        <p>Aún no has completado ningún montaje. Cuando finalices un montaje, aparecerá en esta sección.</p>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle filter form submission when select values change
+        const orderSelect = document.querySelector('select[name="orden"]');
+        const estadoSelect = document.querySelector('select[name="estado"]');
+        
+        // Auto-submit on select change (optional feature)
+        if (orderSelect) {
+            orderSelect.addEventListener('change', function() {
+                if (this.value) {
+                    document.getElementById('filtroForm').submit();
+                }
+            });
+        }
+        
+        if (estadoSelect) {
+            estadoSelect.addEventListener('change', function() {
+                document.getElementById('filtroForm').submit();
+            });
+        }
+        
+        // Pagination for montajes finalizados (if not in filter mode)
+        const paginationLinks = document.querySelectorAll('.pagination-btn');
+        paginationLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const page = this.getAttribute('data-page');
+                
+                // Add page to current URL and redirect
+                const url = new URL(window.location.href);
+                url.searchParams.set('page', page);
+                window.location.href = url.toString();
+            });
+        });
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .header-actions {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    
+    .header-filters {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .filter-group {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    
+    .search-filter, .order-filter, .estado-filter {
+        display: flex;
+        align-items: center;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+    
+    .search-filter i, .order-filter i, .estado-filter i {
+        color: var(--primary-color);
+        padding: 0 10px;
+    }
+    
+    .filter-input, .filter-select {
+        border: none;
+        padding: 8px 12px;
+        background: transparent;
+        outline: none;
+        min-width: 200px;
+    }
+    
+    .filter-select {
+        cursor: pointer;
+    }
+    
+    .btn-sm {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+    
+    .btn-outline {
+        background: transparent;
+        border: 1px solid var(--primary-color);
+        color: var(--primary-color);
+        border-radius: 8px;
+        padding: 8px 16px;
+        cursor: pointer;
+        transition: var(--transition);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .btn-outline:hover {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    .filter-badge {
+        display: flex;
+        align-items: center;
+        background-color: rgba(var(--primary-rgb), 0.1);
+        color: var(--primary-color);
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 14px;
+        gap: 6px;
+        margin-right: 8px;
+    }
+    
+    .card-actions {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    
+    .mt-3 {
+        margin-top: 12px;
+    }
+    
+    .summary-info {
+        display: flex;
+        gap: 15px;
+    }
+    
+    .summary-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px 20px;
+        border-radius: 12px;
+        color: white;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        min-width: 180px;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .summary-item:hover {
+        transform: translateY(-5px);
+    }
+    
+    .summary-item::after {
+        content: '';
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        z-index: 1;
+    }
+    
+    .summary-item::before {
+        content: '';
+        position: absolute;
+        bottom: -25px;
+        left: -15px;
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 50%;
+        z-index: 1;
+    }
+    
+    .summary-item.progress {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+    }
+    
+    .summary-item.progress:hover {
+        box-shadow: 0 12px 25px rgba(37, 99, 235, 0.3);
+    }
+    
+    .summary-item.completed {
+        background: linear-gradient(135deg, var(--success-color), #0d9488);
+        box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);
+    }
+    
+    .summary-item.completed:hover {
+        box-shadow: 0 12px 25px rgba(16, 185, 129, 0.3);
+    }
+    
+    .summary-icon {
+        background: rgba(255, 255, 255, 0.2);
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+        position: relative;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .summary-icon i {
+        font-size: 22px;
+        color: white;
+    }
+    
+    .summary-text {
+        z-index: 2;
+        position: relative;
+    }
+    
+    .summary-value {
+        font-size: 26px;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    
+    .summary-label {
+        font-size: 14px;
+        opacity: 0.9;
+        font-weight: 500;
+    }
+    
+    .no-results-en-proceso,
+    .no-results-finalizados {
+        margin-top: 20px;
+    }
+    
+    /* Estilos para el buscador - Actualizado para coincidir con montajes disponibles */
+    .search-box {
+        position: relative;
+        width: 250px;
+    }
+    
+    .search-box i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-lighter);
+    }
+    
+    .search-input {
+        width: 100%;
+        padding: 10px 12px 10px 35px;
+        border: 1px solid var(--border-color);
+        border-radius: 50px;
+        font-size: 14px;
+        background-color: white;
+        transition: var(--transition);
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+    
+    /* Estilos para la paginación */
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        margin: 24px 0 12px;
+    }
+    
+    .pagination {
+        display: flex;
+        align-items: center;
+        background: white;
+        padding: 10px 16px;
+        border-radius: 12px;
+        box-shadow: var(--card-shadow);
+        gap: 8px;
+    }
+    
+    .pagination-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: var(--background-light);
+        color: var(--text-color);
+        text-decoration: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    
+    .pagination-link:hover {
+        background: var(--primary-light);
+        color: var(--primary-color);
+        transform: translateY(-2px);
+    }
+    
+    .pagination-link.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    
+    .pagination-info {
+        margin: 0 10px;
+        color: var(--text-color-light);
+        font-size: 14px;
+    }
+    
+    /* Estilos para el indicador de carga */
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10;
+        border-radius: 12px;
+    }
+    
+    .loading-spinner {
+        padding: 20px;
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .loading-spinner i {
+        font-size: 24px;
+        color: var(--primary-color);
+    }
+    
+    /* Estilos para mensajes de error */
+    .error-message {
+        background-color: #fee2e2;
+        color: #b91c1c;
+        padding: 12px 16px;
+        margin: 10px 0;
+        border-radius: 8px;
+        text-align: center;
+        animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Media Queries específicos para esta página */
+    @media (max-width: 768px) {
+        .summary-info {
+            flex-direction: row;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        
+        .summary-item {
+            flex: 1;
+            min-width: 160px;
+        }
+        
+        .summary-value {
+            font-size: 22px;
+        }
+        
+        .summary-icon {
+            width: 40px;
+            height: 40px;
+        }
+        
+        .summary-icon i {
+            font-size: 18px;
+        }
+        
+        .card-header h2 {
+            font-size: 18px;
+        }
+        
+        .data-table th {
+            white-space: nowrap;
+        }
+        
+        .pagination {
+            padding: 8px 12px;
+        }
+        
+        .pagination-link {
+            width: 32px;
+            height: 32px;
+        }
+        
+        .pagination-info {
+            font-size: 12px;
+            margin: 0 6px;
+        }
+        
+        .search-box {
+            width: 200px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .summary-item {
+            padding: 12px 15px;
+            min-width: 140px;
+        }
+        
+        .summary-value {
+            font-size: 20px;
+        }
+        
+        .summary-label {
+            font-size: 12px;
+        }
+        
+        .filter-item {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        
+        .card {
+            margin-bottom: 20px;
+        }
+        
+        .mt-6 {
+            margin-top: 20px;
+        }
+        
+        .pagination-container {
+            margin: 16px 0 8px;
+        }
+        
+        .pagination-link {
+            width: 28px;
+            height: 28px;
+        }
+        
+        .search-box {
+            width: 100%;
+        }
+        
+        .search-input {
+            padding: 8px 12px 8px 32px;
+            font-size: 13px;
+        }
+    }
+</style>
+{% endblock %} 
