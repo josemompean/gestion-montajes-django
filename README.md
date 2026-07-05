@@ -18,8 +18,8 @@ Aplicación web desarrollada con Django para la gestión de montajes e instalaci
 
 1. Clona el repositorio
    ```
-   git clone https://github.com/jorgeparddo/Proyecto_gestion_montajes.git
-   cd Proyecto_gestion_montajes
+ git clone https://github.com/josemompean/gestion-montajes-django.git
+cd gestion-montajes-django
    ```
 
 2. Instala las dependencias
