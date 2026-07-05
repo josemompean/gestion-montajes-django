@@ -1,65 +1,103 @@
-# Gestión de Montajes
+```md
+# Gestión de Montajes - Django
 
-Aplicación web desarrollada con Django para la gestión de montajes e instalaciones.
+Aplicación web desarrollada con **Django** para la gestión de montajes e instalaciones.
 
-## Características
+El proyecto permite registrar montajes, consultar su estado, gestionar usuarios, revisar el historial de trabajos y visualizar estadísticas generales.
 
-- Gestión de montajes y seguimiento de instalaciones
-- Historial y estadísticas de montajes
-- Sistema de autenticación de usuarios
-- Interfaz de usuario moderna y responsiva
+Este proyecto fue desarrollado como proyecto académico durante el ciclo de **Desarrollo de Aplicaciones Multiplataforma (DAM)**.
 
-## Requisitos
+## Funcionalidades
 
-- Python 3.8+
-- Django 5.1.6+
+- Registro e inicio de sesión de usuarios.
+- Gestión de montajes e instalaciones.
+- Seguimiento del estado de los montajes.
+- Historial de trabajos realizados.
+- Dashboard principal.
+- Estadísticas del sistema.
+- Gestión de usuarios.
+- Interfaz web responsive.
 
-## Instalación
+## Tecnologías utilizadas
 
-1. Clona el repositorio
-   ```
-   git clone https://github.com/jorgeparddo/Proyecto_gestion_montajes.git
-   cd Proyecto_gestion_montajes
-   ```
+- Python
+- Django
+- MySQL
+- HTML5
+- CSS3
+- JavaScript
+- Bootstrap
+- Git y GitHub
 
-2. Instala las dependencias
-   ```
-   pip install -r requirements.txt
-   ```
+## Instalación y ejecución
 
-3. Realiza las migraciones
-   ```
-   python manage.py migrate
-   ```
+Para ejecutar el proyecto en local, se pueden seguir estos pasos:
 
-4. Crea un superusuario (opcional)
-   ```
-   python manage.py createsuperuser
-   ```
+1. Clonar el repositorio:
 
-5. Inicia el servidor
-   ```
-   python manage.py runserver
-   ```
+`git clone https://github.com/josemompean/gestion-montajes-django.git`
 
-6. Accede a la aplicación en tu navegador
-   ```
-   http://127.0.0.1:8000/
-   ```
+2. Entrar en la carpeta del proyecto:
 
-## Uso
+`cd gestion-montajes-django`
 
-- Inicia sesión o regístrate para acceder al sistema
-- Gestiona montajes desde el dashboard principal
-- Consulta el historial y estadísticas en la sección correspondiente
+3. Crear un entorno virtual:
 
-## Estructura del Proyecto
+`python -m venv venv`
 
-- `gestion_montajes/`: Aplicación principal de Django
-- `montajes/`: Aplicación específica para la gestión de montajes
-- `staticfiles/`: Archivos estáticos (CSS, JavaScript, imágenes)
-- `requirements.txt`: Dependencias del proyecto
+4. Activar el entorno virtual en Windows:
 
-## Licencia
+`venv\Scripts\activate`
 
-Este proyecto está licenciado bajo la Licencia MIT 
+5. Instalar las dependencias:
+
+`pip install -r requirements.txt`
+
+6. Configurar la base de datos MySQL en el archivo `settings.py`.
+
+7. Aplicar las migraciones:
+
+`python manage.py migrate`
+
+8. Crear un superusuario:
+
+`python manage.py createsuperuser`
+
+9. Ejecutar el servidor:
+
+`python manage.py runserver`
+
+10. Abrir la aplicación en el navegador:
+
+`http://127.0.0.1:8000/`
+
+## Estructura del proyecto
+
+- `gestion_montajes/`: configuración principal del proyecto Django.
+- `montajes/`: aplicación principal de gestión de montajes.
+- `manage.py`: archivo principal de administración de Django.
+- `requirements.txt`: dependencias del proyecto.
+- `README.md`: documentación del proyecto.
+- `.gitignore`: archivos y carpetas excluidos del repositorio.
+
+## Objetivo del proyecto
+
+El objetivo de este proyecto es aplicar conocimientos de desarrollo web con Django, gestión de bases de datos, autenticación de usuarios, plantillas HTML, estilos CSS y organización de un proyecto backend.
+
+## Aprendizajes aplicados
+
+Durante el desarrollo de este proyecto se trabajaron conceptos como:
+
+- Desarrollo web con Django.
+- Modelado de datos.
+- Gestión de usuarios y autenticación.
+- Conexión con base de datos MySQL.
+- Creación de vistas, formularios y plantillas.
+- Uso de HTML, CSS y JavaScript.
+- Organización de archivos estáticos.
+- Control de versiones con Git y GitHub.
+
+## Autor
+
+**José Mompeán Roca**  
+Desarrollador Junior | Soporte IT
