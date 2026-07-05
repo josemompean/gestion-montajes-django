@@ -63,3 +63,20 @@ Aplicación web desarrollada con Django para la gestión de montajes e instalaci
 ## Licencia
 
 Este proyecto está licenciado bajo la Licencia MIT 
+
+## Capturas del proyecto
+
+### Panel principal de montajes
+![Panel principal de montajes](docs/img/listado-montajes.png)
+
+### Detalle de un montaje
+![Detalle de un montaje](docs/img/detalle-montaje.png)
+
+### Dashboard de estadísticas
+![Dashboard de estadísticas](docs/img/dashboard-estadisticas.png)
+
+### Estadísticas por montador
+![Estadísticas por montador](docs/img/estadisticas-montador.png)
+
+### Historial de montajes finalizados
+![Historial de montajes finalizados](docs/img/montajes-finalizados.png)
